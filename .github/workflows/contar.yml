@@ -3,7 +3,7 @@ name: Conteo de Archivos
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch: # Te permite activarlo con un botón cuando quieras
+  workflow_dispatch:
 
 jobs:
   ejecutar-conteo:
@@ -11,6 +11,7 @@ jobs:
     steps:
     - name: Descargar el repositorio
       uses: actions/checkout@v4
+      timeout-minutes: 2 # 👈 Si tarda más de 2 minutos se cancela solo
 
     - name: Dar permisos y ejecutar
       run: |
