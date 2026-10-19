@@ -1,23 +1,22 @@
 bash
 #!/bin/bash
 
-# 1. Esta es la función que cuenta los archivos de forma segura
 file_count()
 {
     if [ ! -e "$1" ]
     then
-        echo "Error: La carpeta '$1' no existe."
+        echo "❌ ERROR: La carpeta '$1' no existe en este repositorio."
+        echo "Carpetas disponibles en la raíz de tu proyecto:"
+        ls -d */ 2>/dev/null || echo "(No hay más carpetas en la raíz)"
         exit 1
     fi
 
     local -i files=$(find "$(readlink -f -- "$1")" -type f -print0 | grep -cz -- -)
-    echo $files
+    echo "✅ ¡Éxito! Total de archivos: $files"
 }
 
-# 2. Aquí defines qué carpeta quieres contar (CAMBIA ESTO)
+# ⚠️ PON AQUÍ TU CARPETA. Si está dentro de otra, usa barras: "carpeta1/carpeta2"
 CARPETA_A_CONTAR="JPG"
 
-# 3. Aquí se ejecuta el conteo y muestra el resultado
-echo "Contando archivos dentro de la carpeta: $CARPETA_A_CONTAR"
-echo "Total de archivos:"
+echo "Buscando en: $CARPETA_A_CONTAR"
 file_count "$CARPETA_A_CONTAR"
