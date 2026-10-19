@@ -15,7 +15,7 @@ file_count()
 }
 
 # 2. Aquí defines qué carpeta quieres contar (CAMBIA ESTO)
-CARPETA_A_CONTAR="TU_CARPETA"
+CARPETA_A_CONTAR="JPG"
 
 # 3. Aquí se ejecuta el conteo y muestra el resultado
 echo "Contando archivos dentro de la carpeta: $CARPETA_A_CONTAR"
