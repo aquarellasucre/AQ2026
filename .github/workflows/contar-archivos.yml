@@ -1,1 +1,18 @@
+name: Conteo de Archivos Automatizado
 
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # Esto te permite activarlo con un botón cuando quieras
+
+jobs:
+  conteo:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Copiar el repositorio
+      uses: actions/checkout@v4
+
+    - name: Dar permiso y ejecutar el script
+      run: |
+        chmod +x safe-count-files.sh
+        ./safe-count-files.sh
