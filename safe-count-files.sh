@@ -1,4 +1,4 @@
-bash
+Bash
 #!/bin/bash
 
 file_count()
@@ -11,7 +11,8 @@ file_count()
         exit 1
     fi
 
-    local -i files=$(find "$(readlink -f -- "$1")" -type f -print0 | grep -cz -- -)
+    # Corrección para contar archivos correctamente
+    local -i files=$(find "$(readlink -f -- "$1")" -type f | wc -l)
     echo "✅ ¡Éxito! Total de archivos: $files"
 }
 
