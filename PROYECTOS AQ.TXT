@@ -1,0 +1,13 @@
+16/11/2026 
+
+continuar consulta stock
+
+¡Listo! Guardé el avance del proyecto Consulta de Stock en Copiar AQ.
+
+Quedamos exactamente aquí:
+- Rama creada
+   consulta-stock en aquarellasucre/CopiadoAQ.
+- Todavía no hemos modificado ningún código.
+- El siguiente paso será descargar y adjuntar el ZIP de esa rama para que pueda revisar el proyecto.
+- Mantendremos intactas las ramas main y pdf-whatsapp, y protegeremos las funciones que ya funcionan.
+Cuando regreses, solo dime «continuar consulta stock» y retomamos desde aquí. ¡Hasta más tarde! 😊
