@@ -1,0 +1,8 @@
+// Iniciar Sesión
+https://aq.coreva.com.bo/aquarella/Aquarella/Control/LoginForm.aspx
+// Consulta de Stock
+https://aq.coreva.com.bo/aquarella/Aquarella/Logistica/stockForm.aspx
+// usuario
+karinasosa0690@gmail.com
+//Contraseña
+karina66677
