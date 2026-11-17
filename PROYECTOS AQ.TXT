@@ -11,3 +11,15 @@ Quedamos exactamente aquí:
 - El siguiente paso será descargar y adjuntar el ZIP de esa rama para que pueda revisar el proyecto.
 - Mantendremos intactas las ramas main y pdf-whatsapp, y protegeremos las funciones que ya funcionan.
 Cuando regreses, solo dime «continuar consulta stock» y retomamos desde aquí. ¡Hasta más tarde! 😊
+
+17 nov 2026
+Dejamos Consulta de stock en Copiar AQ en este punto:
+- Revisamos el archivo completo.
+- Encontramos la causa del error: informacion se estaba agregando dos veces al mismo contenedor.
+- La corrección consiste en eliminar únicamente el segundo bloque linea.addView(informacion, ...).
+- Queda pendiente compilar, instalar y probar nuevamente el botón «Leer data».
+Para continuar más tarde, escribe exactamente:
+
+«Continuar consulta stock desde el error de vista duplicada»
+
+Retomaremos desde esa corrección, sin modificar las partes que ya funcionan.
