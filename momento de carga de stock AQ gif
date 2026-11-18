@@ -1,0 +1,375 @@
+Procesó durante 41s
+Implementaste carga robusta, estados, callbacks y puente JavaScript
+
+Ya revisé el archivo completo. Podemos implementar el control sin modificar la lógica que procesa las existencias ni el diseño de las dos vistas.
+
+La solución será utilizar los eventos reales de Aquarella:
+
+beginRequest: la consulta AJAX comienza.
+
+endRequest: Aquarella termina de procesarla.
+
+Para comunicar esos eventos desde JavaScript hacia Kotlin usaremos un pequeño puente de WebView (JavascriptInterface). Así no tendremos que adivinar cuánto tarda la consulta ni depender de que el GIF aparezca o desaparezca.
+
+También vamos a proteger leerTabla() desde Kotlin: aunque se intente ejecutar mientras la consulta está pendiente, no leerá la tabla anterior.
+
+1. Agregar las variables de control
+Busca estas declaraciones al principio de ConsultaStockActivity:
+
+private lateinit var webView: WebView
+private lateinit var estado: TextView
+private lateinit var progreso: ProgressBar
+private lateinit var articuloInput: EditText
+
+Reemplázalas por:
+
+private lateinit var webView: WebView
+private lateinit var estado: TextView
+private lateinit var progreso: ProgressBar
+private lateinit var articuloInput: EditText
+
+private lateinit var botonLeerData: Button
+private lateinit var botonConsultar: Button
+
+private var consultaEnCurso = false
+private var consultaLista = true
+
+consultaLista comienza en true para conservar el comportamiento actual antes de iniciar una nueva consulta. Cuando se solicite otro artículo, se invalidará el resultado anterior.
+
+2. Agregar el puente entre JavaScript y Kotlin
+Dentro de la clase ConsultaStockActivity, agrega este bloque, por ejemplo, inmediatamente después de onCreate():
+
+private inner class StockJavascriptBridge {
+
+    @android.webkit.JavascriptInterface
+    fun consultaIniciada() {
+        runOnUiThread {
+            consultaEnCurso = true
+            consultaLista = false
+
+            botonConsultar.isEnabled = false
+            botonLeerData.isEnabled = false
+
+            estado.text = "Consultando artículo…"
+            progreso.visibility = ProgressBar.VISIBLE
+        }
+    }
+
+    @android.webkit.JavascriptInterface
+    fun consultaFinalizada(exito: Boolean, detalle: String) {
+        runOnUiThread {
+            consultaEnCurso = false
+            consultaLista = exito
+
+            botonConsultar.isEnabled = true
+            botonLeerData.isEnabled = exito
+
+            progreso.visibility = ProgressBar.GONE
+
+            estado.text = if (exito) {
+                "Consulta finalizada. Ya puedes leer los datos."
+            } else {
+                "La consulta terminó con un error."
+            }
+
+            if (!exito) {
+                mostrarMensajeStock(
+                    "Aquarella no pudo completar la consulta.\n\n$detalle"
+                )
+            }
+        }
+    }
+}
+
+Este puente será el encargado de bloquear y habilitar los botones cuando Aquarella informe que comenzó o terminó el proceso.
+
+3. Registrar el puente en el WebView
+Dentro de construirPantalla(), busca el bloque:
+
+webView = WebView(this).apply {
+    settings.javaScriptEnabled = true
+
+Inmediatamente después de configurar JavaScript, agrega:
+
+addJavascriptInterface(
+    StockJavascriptBridge(),
+    "AndroidStock"
+)
+
+Debe quedar así:
+
+webView = WebView(this).apply {
+    settings.javaScriptEnabled = true
+
+    addJavascriptInterface(
+        StockJavascriptBridge(),
+        "AndroidStock"
+    )
+
+    settings.domStorageEnabled = true
+
+4. Guardar las referencias de los botones
+En construirPantalla(), busca:
+
+acciones.addView(crearBoton("Inicio", 1f) { abrirLogin() })
+acciones.addView(crearBoton("Consulta", 1f) { abrirStock() })
+acciones.addView(crearBoton("Leer data", 1f) { leerTabla() })
+
+Reemplázalo por:
+
+acciones.addView(crearBoton("Inicio", 1f) { abrirLogin() })
+acciones.addView(crearBoton("Consulta", 1f) { abrirStock() })
+
+botonLeerData = crearBoton("Leer data", 1f) {
+    leerTabla()
+}
+
+acciones.addView(botonLeerData)
+
+Ahora busca el bloque que agrega el botón Consultar:
+
+filaBusqueda.addView(
+    crearBoton("Consultar", 0f) {
+        buscarArticulo()
+    }.apply {
+
+Reemplaza solamente crearBoton("Consultar", 0f) por botonConsultar = crearBoton("Consultar", 0f), conservando el resto del bloque:
+
+filaBusqueda.addView(
+    botonConsultar = crearBoton("Consultar", 0f) {
+        buscarArticulo()
+    }.apply {
+        layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            (42 * resources.displayMetrics.density).toInt()
+        ).apply {
+            setMargins(
+                (6 * resources.displayMetrics.density).toInt(),
+                0,
+                0,
+                0
+            )
+        }
+    }
+)
+
+5. Reemplazar buscarArticulo()
+Reemplaza la función completa actual por esta:
+
+private fun buscarArticulo() {
+    val articulo = articuloInput.text.toString().trim()
+
+    if (articulo.isBlank()) {
+        Toast.makeText(
+            this,
+            "Introduce un código de artículo",
+            Toast.LENGTH_SHORT
+        ).show()
+        return
+    }
+
+    if (consultaEnCurso) {
+        return
+    }
+
+    // Invalidar los datos de la consulta anterior.
+    consultaEnCurso = true
+    consultaLista = false
+
+    botonConsultar.isEnabled = false
+    botonLeerData.isEnabled = false
+
+    estado.text = "Iniciando consulta de $articulo…"
+    progreso.visibility = ProgressBar.VISIBLE
+
+    val valorSeguro = org.json.JSONObject.quote(articulo)
+
+    val javascript = """
+        (function() {
+            var campo = document.getElementById('ContentPlaceHolder1_TxtItem');
+            var boton = document.getElementById('ContentPlaceHolder1_btConsult');
+
+            if (!campo || !boton) {
+                return 'formulario_no_encontrado';
+            }
+
+            if (!window.Sys ||
+                !Sys.WebForms ||
+                !Sys.WebForms.PageRequestManager) {
+                return 'ajax_no_disponible';
+            }
+
+            var prm = Sys.WebForms.PageRequestManager.getInstance();
+
+            if (!window.__aqStockHandlersInstalled) {
+
+                window.__aqConsultaActiva = false;
+                window.__aqSolicitudIniciada = false;
+
+                prm.add_beginRequest(function(sender, args) {
+
+                    var elemento = args.get_postBackElement();
+                    var corresponde = false;
+
+                    while (elemento) {
+                        if (elemento.id === 'ContentPlaceHolder1_btConsult') {
+                            corresponde = true;
+                            break;
+                        }
+
+                        elemento = elemento.parentNode;
+                    }
+
+                    if (corresponde) {
+                        window.__aqConsultaActiva = true;
+                        window.__aqSolicitudIniciada = true;
+
+                        AndroidStock.consultaIniciada();
+                    }
+                });
+
+                prm.add_endRequest(function(sender, args) {
+
+                    if (window.__aqConsultaActiva) {
+
+                        window.__aqConsultaActiva = false;
+
+                        var error = args.get_error();
+
+                        if (error) {
+                            AndroidStock.consultaFinalizada(
+                                false,
+                                String(error.message || error)
+                            );
+                        } else {
+                            AndroidStock.consultaFinalizada(
+                                true,
+                                ''
+                            );
+                        }
+                    }
+                });
+
+                window.__aqStockHandlersInstalled = true;
+            }
+
+            window.__aqSolicitudIniciada = false;
+
+            campo.value = $valorSeguro;
+
+            campo.dispatchEvent(
+                new Event('input', { bubbles: true })
+            );
+
+            campo.dispatchEvent(
+                new Event('change', { bubbles: true })
+            );
+
+            boton.click();
+
+            if (!window.__aqSolicitudIniciada) {
+                return 'postback_no_iniciado';
+            }
+
+            return 'consulta_enviada';
+
+        })();
+    """.trimIndent()
+
+    webView.evaluateJavascript(javascript) { resultado ->
+
+        when {
+            resultado == "\"consulta_enviada\"" -> {
+                estado.text = "Esperando respuesta de Aquarella…"
+
+                Toast.makeText(
+                    this,
+                    "Consulta enviada",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            else -> {
+                consultaEnCurso = false
+                consultaLista = false
+
+                botonConsultar.isEnabled = true
+                botonLeerData.isEnabled = false
+
+                progreso.visibility = ProgressBar.GONE
+
+                estado.text = "No se pudo iniciar la consulta."
+
+                val mensaje = when (resultado) {
+                    "\"formulario_no_encontrado\"" ->
+                        "No se encontró el formulario. Abre primero Consulta."
+
+                    "\"ajax_no_disponible\"" ->
+                        "No se detectó el sistema AJAX de Aquarella. Recarga la página."
+
+                    "\"postback_no_iniciado\"" ->
+                        "Aquarella no inició la consulta. Verifica el formulario e inténtalo nuevamente."
+
+                    else ->
+                        "No se pudo iniciar la consulta. Resultado: $resultado"
+                }
+
+                Toast.makeText(
+                    this,
+                    mensaje,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+}
+
+6. Proteger leerTabla()
+Esta parte es importante: aunque alguien intente ejecutar la lectura mientras Aquarella está procesando el artículo, Kotlin la rechazará.
+
+Busca:
+
+private fun leerTabla() {
+    val javascript = """
+
+Y agrega esta validación inmediatamente después de abrir la función:
+
+private fun leerTabla() {
+
+    if (consultaEnCurso || !consultaLista) {
+        Toast.makeText(
+            this,
+            "Espera a que termine la consulta de Aquarella.",
+            Toast.LENGTH_SHORT
+        ).show()
+        return
+    }
+
+    val javascript = """
+
+El resto de leerTabla() permanece exactamente igual.
+
+Así debería funcionar después de los cambios
+Antes de consultar
+
+Los botones funcionan como hasta ahora.
+
+Pulsas Consultar
+
+Se invalida el resultado anterior y se deshabilita Leer data.
+
+Aquarella inicia el proceso AJAX
+
+El evento beginRequest avisa a Copiar AQ. Los botones permanecen bloqueados.
+
+Aquarella termina el proceso AJAX
+
+El evento endRequest avisa a Copiar AQ. Si no hubo error, se habilita Leer data.
+
+Pulsas Leer data
+
+Se lee la tabla correspondiente a la consulta recién terminada.
+
+Una precisión: el código considera finalizada la petición cuando se dispara endRequest sin error. Si Aquarella devuelve un mensaje de validación o una respuesta sin datos, la lectura posterior todavía podría encontrar una tabla vacía o un mensaje; eso lo podremos comprobar en la prueba.
+
+Te recomiendo aplicar estos cambios y compilar. Primero probaremos una consulta normal y después la prueba importante: consultar un segundo artículo e intentar leer inmediatamente, antes de que Aquarella termine. No necesitamos modificar ninguna otra función de procesamiento de stock.
