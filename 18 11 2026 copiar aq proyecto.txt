@@ -1,0 +1,58 @@
+Perfecto. Vamos a implementarlo sin tocar el procesamiento normal de las tallas ni las cantidades en cero.
+
+Primero necesito revisar dos fragmentos de ConsultaStockActivity.kt:
+1. La clase o bloque AndroidStock, donde están definidos los métodos consultaIniciada() y consultaFinalizada().
+2. La función Kotlin completa consultaFinalizada(exito: Boolean, detalle: String).
+Pégalos aquí tal como aparecen en GitHub. Si consultaFinalizada() está dentro de AndroidStock, incluye también ese bloque para ver cómo está conectado.
+
+Con eso te indicaré exactamente qué líneas reemplazar y cuáles agregar. Iremos paso a paso, conservando todo lo que ya funciona.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Texto pegado(20261118-071740).txtDocumento
+aqui tienes completo y revisalo e implementa los necesario para cumplir el objetivo que buscamos,
+
+
+
+
+
+
+
+
+
+
+
+
+Revisé el archivo completo. Ya identifiqué dónde integrar la solución: en el evento endRequest de Aquarella, antes de habilitar Leer data.
+
+La buena noticia es que podemos detectar el resultado especial directamente en la tabla ContentPlaceHolder1_gvStock, sin buscar el mensaje por toda la página. Así, las consultas que devuelven filas normales —incluidos los accesorios con cantidades en talla 0— conservarán su procesamiento actual.
+
+Voy a preparar el archivo con estos cambios:
+- Detectar la tabla de una sola fila y una sola celda extendida.
+- Mantener Leer data deshabilitado cuando Aquarella no encuentre existencias.
+- Comprobar la imagen únicamente en ese caso.
+- Mostrar el resultado con la imagen centrada o el aviso alternativo si no se encuentra.
+
+
+
+
+
+
+
+
+
+Modificaste la consulta visual
