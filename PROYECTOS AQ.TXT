@@ -26,3 +26,7 @@ Retomaremos desde esa corrección, sin modificar las partes que ya funcionan.
 
 20112026
 Continuar Copiar AQ – Fase 3 Catálogo
+
+
+22112026
+Continuar diseño de Pedidos Copiar AQ — revisar campos de AppSheet
