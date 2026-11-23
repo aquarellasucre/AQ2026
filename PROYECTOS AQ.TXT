@@ -30,3 +30,17 @@ Continuar Copiar AQ – Fase 3 Catálogo
 
 22112026
 Continuar diseño de Pedidos Copiar AQ — revisar campos de AppSheet
+
+
+23 11 2026
+¡Perfecto! Dejamos aquí el avance guardado.
+
+La frase para continuar será:
+
+«Continuar diseño de Campania_OH en Copiar AQ»
+
+Cuando la escribas, retomaremos exactamente donde quedamos: definición de los campos de Campania_OH, empezando por precisar cuándo corresponde utilizar CodigoCatalogo.
+
+Después continuaremos con Campania_OD y, una vez cerradas ambas tablas, actualizaremos la plantilla Excel de importación.
+
+No tendremos que volver a explicar lo que ya definimos. 😊
